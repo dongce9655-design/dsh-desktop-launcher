@@ -28,10 +28,16 @@ function Test-Url {
 }
 
 function Stop-DshWeb {
-    $listener = Get-NetTCPConnection -LocalPort 3080 -State Listen -ErrorAction SilentlyContinue |
+    # Derive the listen port from the configured URL so -Stop matches -Url.
+    $port = 3080
+    try {
+        $parsed = [uri]$Url
+        if ($parsed.Port -gt 0) { $port = $parsed.Port }
+    } catch { }
+    $listener = Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue |
         Select-Object -First 1
     if ($null -eq $listener) {
-        Write-Host 'dsh web is not running.'
+        Write-Host "dsh web is not running on port $port."
         return
     }
     $pidToStop = $listener.OwningProcess

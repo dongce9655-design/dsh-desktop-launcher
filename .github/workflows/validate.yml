@@ -1,0 +1,46 @@
+name: validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  powershell:
+    name: PowerShell syntax + smoke
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Parse-check all PowerShell scripts
+        shell: pwsh
+        run: |
+          $failed = $false
+          Get-ChildItem -Recurse -Filter *.ps1 | Sort-Object FullName | ForEach-Object {
+            $tokens = $null
+            $errors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile($_.FullName, [ref]$tokens, [ref]$errors) | Out-Null
+            if ($errors.Count -gt 0) {
+              $failed = $true
+              foreach ($e in $errors) { Write-Host "::error file=$($_.Name)::$($e.Message)" }
+            } else {
+              Write-Host "OK  $($_.FullName)"
+            }
+          }
+          if ($failed) { exit 1 }
+
+      - name: Smoke test -Stop (safe when nothing is running)
+        shell: pwsh
+        run: |
+          $output = & powershell -NoProfile -ExecutionPolicy Bypass -File .\launcher.ps1 -Stop 2>&1
+          if ($LASTEXITCODE -ne 0) { Write-Host $output; exit 1 }
+          Write-Host "Stop smoke OK"
+
+      - name: Smoke test install/uninstall shortcut
+        shell: pwsh
+        run: |
+          powershell -NoProfile -ExecutionPolicy Bypass -File .\install.ps1 -Name "CI Test" | Out-String | Write-Host
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          powershell -NoProfile -ExecutionPolicy Bypass -File .\install.ps1 -Name "CI Test" -Uninstall | Out-String | Write-Host
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          Write-Host "Shortcut smoke OK"
