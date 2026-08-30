@@ -1,0 +1,11 @@
+# OS noise
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Launcher artifacts
+*.log
+
+# Editor
+.vscode/
+.idea/
