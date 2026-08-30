@@ -23,7 +23,7 @@
 
 ```powershell
 # 1. 克隆本项目
-git clone https://github.com/xuan/dsh-desktop-launcher.git
+git clone https://github.com/dongce9655-design/dsh-desktop-launcher.git
 cd dsh-desktop-launcher
 
 # 2. 创建桌面快捷方式（默认名称 "DeepSeek Harness"，使用项目自带图标）
